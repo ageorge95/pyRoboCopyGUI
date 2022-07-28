@@ -8,6 +8,7 @@ from tkinter import ttk
 from tkinterdnd2 import *
 from tkinter.scrolledtext import ScrolledText
 from os import system
+from threading import Thread
 
 class App():
     def __init__(self,
@@ -169,8 +170,9 @@ class App():
         self.output_TextBox.delete('1.0', END)
         self.output_TextBox.insert(END, received_path)
 
-    def launch_robocopy(self,
-                        launch: bool):
+    def launch_robocopy_slave(self,
+                              launch: bool):
+
         robocopy_wrapper = RoboCopyWrapper(input=self.input_TextBox.get('1.0', END).strip(),
                                            output=self.output_TextBox.get('1.0', END).strip(),
                                            move=self.move_checkbox_variable.get(),
@@ -198,6 +200,12 @@ class App():
                 rbcp_proc = system(f"start /wait cmd /c {CLI_args_str}")
                 self.label_current_status_txt.configure({'text': f"RoboCopy finished, exit code {rbcp_proc}",
                                                          'fg': 'green'})
+
+
+    def launch_robocopy(self,
+                        launch: bool):
+        Thread(target=self.launch_robocopy_slave,
+               args=(launch,)).start()
 
 if __name__ == '__main__':
 
