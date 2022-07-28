@@ -195,12 +195,13 @@ class App():
             self.TextBox_CLI_args_value.configure(state='disabled')
 
             if launch:
+                self.generate_CLI_execute_button.configure(state = 'disabled')
                 self.label_current_status_txt.configure({'text': f"RoboCopy launched",
                                                          'fg': 'green'})
                 rbcp_proc = system(f"start /wait cmd /c {CLI_args_str}")
                 self.label_current_status_txt.configure({'text': f"RoboCopy finished, exit code {rbcp_proc}",
                                                          'fg': 'green'})
-
+                self.generate_CLI_execute_button.configure(state='normal')
 
     def launch_robocopy(self,
                         launch: bool):
