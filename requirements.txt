@@ -1,2 +1,2 @@
-darkdetect
-tkinterdnd2
+git+https://github.com/ageorge95/tkinterdnd2@release/0.4.2
+git+https://github.com/ageorge95/CustomTkinter@v5.2.2
