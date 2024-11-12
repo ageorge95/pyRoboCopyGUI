@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, 'CustomTkinter')
 
 from _00_RoboCopy_wrapper import RoboCopyWrapper
-from CustomTkinter import customtkinter
+import customtkinter
 from tkinter import *
 from tkinter import ttk
 from tkinterdnd2 import *
