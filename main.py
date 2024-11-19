@@ -85,7 +85,7 @@ def get_running_path(relative_path):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("pyRoboCopy GUI")
+        self.setWindowTitle("pyRoboCopy GUI v" + open(get_running_path('version.txt')).read())
         self.setGeometry(200, 200, 800, 500)
         self.setWindowIcon(QIcon(get_running_path('icon.ico')))
 
