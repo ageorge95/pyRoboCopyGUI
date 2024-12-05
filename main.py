@@ -31,13 +31,15 @@ class RoboCopyWrapper():
                  output: str,
                  ipg: int = 0,
                  move: bool = False,
-                 mirror: bool = False):
+                 mirror: bool = False,
+                 mt: int = 0):
 
         self.input = input
         self.output = output
         self.ipg = ipg
         self.move = move
         self.mirror = mirror
+        self.mt = mt
 
         # compute the arguments
         if os.path.isdir(self.input):
@@ -91,6 +93,7 @@ class RoboCopyWrapper():
             (f' "{self.input_file_str}"' if self.input_file_str else '') + \
             f' {self.move_str}' + \
             f' {self.mirror_str}' + \
+            f' /MT:{self.mt}' + \
             f' /IPG:{self.ipg_str}'
 
 def get_running_path(relative_path):
@@ -147,6 +150,10 @@ class MainWindow(QMainWindow):
         self.mirror_selection_combobox = QComboBox()
         self.mirror_selection_combobox.addItems(["No", "Yes"])
 
+        self.multithreading_selection_label = QLabel("MultiThreading:")
+        self.multithreading_selection_combobox = QComboBox()
+        self.multithreading_selection_combobox.addItems(['0', '2', '5', '10', '15', '20'])
+
         self.ipg_label = QLabel("InterPacketGap (speed_limiter):")
         self.ipg_combobox = QComboBox()
         self.ipg_combobox.addItems([
@@ -162,6 +169,9 @@ class MainWindow(QMainWindow):
         options_layout.addStretch()
         options_layout.addWidget(self.mirror_selection_label)
         options_layout.addWidget(self.mirror_selection_combobox)
+        options_layout.addStretch()
+        options_layout.addWidget(self.multithreading_selection_label)
+        options_layout.addWidget(self.multithreading_selection_combobox)
         options_layout.addStretch()
         options_layout.addWidget(self.ipg_label)
         options_layout.addWidget(self.ipg_combobox)
@@ -205,7 +215,8 @@ class MainWindow(QMainWindow):
                                            output=self.output_textbox.toPlainText().strip(),
                                            move=True if self.main_action_selection_combobox.currentText() == 'Move' else False,
                                            ipg=int(self.ipg_combobox.currentText().split('__')[0]),
-                                           mirror=True if self.mirror_selection_combobox.currentText() == 'Yes' else False)
+                                           mirror=True if self.mirror_selection_combobox.currentText() == 'Yes' else False,
+                                           mt=self.multithreading_selection_combobox.currentText())
         # Sanity checks
         sanity_check = robocopy_wrapper.sanity_check()
         if not sanity_check['success']:
