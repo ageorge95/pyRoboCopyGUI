@@ -1,5 +1,6 @@
 import sys
 import os
+import subprocess
 from threading import Thread
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QLabel,
@@ -29,10 +30,10 @@ class RoboCopyWrapper():
     def __init__(self,
                  input: str,
                  output: str,
-                 ipg: int | str = 0,
+                 ipg: int = 0,
                  move: bool = False,
                  mirror: bool = False,
-                 mt: int | str = 0,
+                 mt: int = 0,
                  restartable: bool = False):
 
         self.input = input
@@ -91,7 +92,7 @@ class RoboCopyWrapper():
             f' {self.move_str}' + \
             (' /MIR' if self.mirror else '') + \
             (' /Z' if self.restartable else '') + \
-            f' /MT:{self.mt}' + \
+            (f' /MT:{self.mt}' if self.mt else '') + \
             f' /IPG:{self.ipg_str}'
 
 def get_running_path(relative_path):
@@ -221,7 +222,7 @@ class MainWindow(QMainWindow):
                                            move=True if self.main_action_selection_combobox.currentText() == 'Move' else False,
                                            ipg=int(self.ipg_combobox.currentText().split('__')[0]),
                                            mirror=True if self.mirror_selection_combobox.currentText() == 'Yes' else False,
-                                           mt=self.multithreading_selection_combobox.currentText(),
+                                           mt=int(self.multithreading_selection_combobox.currentText()),
                                            restartable=True if self.restartable_selection_combobox.currentText() == 'Yes' else False)
         # Sanity checks
         sanity_check = robocopy_wrapper.sanity_check()
@@ -258,10 +259,10 @@ class MainWindow(QMainWindow):
             # noinspection PyTypeChecker
             QMetaObject.invokeMethod(self.status_text, "setStyleSheet",
                                      Q_ARG(str, "color: green;"))
-            result_code = os.system(f"start /wait cmd /c {cli_args_str}")
+            result = subprocess.run(f"start /wait cmd /c {cli_args_str}", shell=True)
             # noinspection PyTypeChecker
             QMetaObject.invokeMethod(self.status_text, "setText",
-                                     Q_ARG(str, f"RoboCopy finished, exit code {result_code}, waiting for work ..."))
+                                     Q_ARG(str, f"RoboCopy finished, exit code {result.returncode}, waiting for work ..."))
             # noinspection PyTypeChecker
             QMetaObject.invokeMethod(self.status_text, "setStyleSheet",
                                      Q_ARG(str, "color: orange;"))
