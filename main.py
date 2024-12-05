@@ -29,10 +29,11 @@ class RoboCopyWrapper():
     def __init__(self,
                  input: str,
                  output: str,
-                 ipg: int = 0,
+                 ipg: int | str = 0,
                  move: bool = False,
                  mirror: bool = False,
-                 mt: int = 0):
+                 mt: int | str = 0,
+                 restartable: bool = False):
 
         self.input = input
         self.output = output
@@ -40,6 +41,7 @@ class RoboCopyWrapper():
         self.move = move
         self.mirror = mirror
         self.mt = mt
+        self.restartable = restartable
 
         # compute the arguments
         if os.path.isdir(self.input):
@@ -60,11 +62,6 @@ class RoboCopyWrapper():
                 self.move_str = r'/mov'
         else:
             self.move_str = ''
-
-        if self.mirror:
-            self.mirror_str = '/MIR'
-        else:
-            self.mirror_str = ''
 
     def sanity_check(self) -> dict:
         if not any([os.path.isdir(self.input), os.path.isfile(self.input)]):
@@ -92,7 +89,8 @@ class RoboCopyWrapper():
             f' "{self.output}"' + \
             (f' "{self.input_file_str}"' if self.input_file_str else '') + \
             f' {self.move_str}' + \
-            f' {self.mirror_str}' + \
+            (' /MIR' if self.mirror else '') + \
+            (' /Z' if self.restartable else '') + \
             f' /MT:{self.mt}' + \
             f' /IPG:{self.ipg_str}'
 
@@ -150,6 +148,10 @@ class MainWindow(QMainWindow):
         self.mirror_selection_combobox = QComboBox()
         self.mirror_selection_combobox.addItems(["No", "Yes"])
 
+        self.restartable_selection_label = QLabel("Restartable:")
+        self.restartable_selection_combobox = QComboBox()
+        self.restartable_selection_combobox.addItems(["No", "Yes"])
+
         self.multithreading_selection_label = QLabel("MultiThreading:")
         self.multithreading_selection_combobox = QComboBox()
         self.multithreading_selection_combobox.addItems(['0', '2', '5', '10', '15', '20'])
@@ -169,6 +171,9 @@ class MainWindow(QMainWindow):
         options_layout.addStretch()
         options_layout.addWidget(self.mirror_selection_label)
         options_layout.addWidget(self.mirror_selection_combobox)
+        options_layout.addStretch()
+        options_layout.addWidget(self.restartable_selection_label)
+        options_layout.addWidget(self.restartable_selection_combobox)
         options_layout.addStretch()
         options_layout.addWidget(self.multithreading_selection_label)
         options_layout.addWidget(self.multithreading_selection_combobox)
@@ -216,7 +221,8 @@ class MainWindow(QMainWindow):
                                            move=True if self.main_action_selection_combobox.currentText() == 'Move' else False,
                                            ipg=int(self.ipg_combobox.currentText().split('__')[0]),
                                            mirror=True if self.mirror_selection_combobox.currentText() == 'Yes' else False,
-                                           mt=self.multithreading_selection_combobox.currentText())
+                                           mt=self.multithreading_selection_combobox.currentText(),
+                                           restartable=True if self.restartable_selection_combobox.currentText() == 'Yes' else False)
         # Sanity checks
         sanity_check = robocopy_wrapper.sanity_check()
         if not sanity_check['success']:
