@@ -30,12 +30,14 @@ class RoboCopyWrapper():
                  input: str,
                  output: str,
                  ipg: int = 0,
-                 move: bool = False):
+                 move: bool = False,
+                 mirror: bool = False):
 
         self.input = input
         self.output = output
         self.ipg = ipg
         self.move = move
+        self.mirror = mirror
 
         # compute the arguments
         if os.path.isdir(self.input):
@@ -57,13 +59,27 @@ class RoboCopyWrapper():
         else:
             self.move_str = ''
 
+        if self.mirror:
+            self.mirror_str = '/MIR'
+        else:
+            self.mirror_str = ''
+
     def sanity_check(self) -> dict:
         if not any([os.path.isdir(self.input), os.path.isfile(self.input)]):
-            return {'success': False,
-                    'reason': f"INPUT {self.input} is neither a file nor a dir"}
+            return {
+                'success': False,
+                'reason': f"INPUT {self.input} is neither a file nor a dir"
+            }
         if not os.path.isdir(os.path.dirname(self.output)):
-            return {'success': False,
-                    'reason': f"OUTPUT {self.output} is not a dir"}
+            return {
+                'success': False,
+                'reason': f"OUTPUT {self.output} is not a dir"
+            }
+        if self.mirror and (os.path.isfile(self.input) or os.path.isfile(self.output)):
+            return {
+                'success': False,
+                'reason': f"Cannot mirror files, only directories !"
+            }
         return {'success': True,
                 'reason': None}
 
@@ -74,6 +90,7 @@ class RoboCopyWrapper():
             f' "{self.output}"' + \
             (f' "{self.input_file_str}"' if self.input_file_str else '') + \
             f' {self.move_str}' + \
+            f' {self.mirror_str}' + \
             f' /IPG:{self.ipg_str}'
 
 def get_running_path(relative_path):
@@ -121,12 +138,14 @@ class MainWindow(QMainWindow):
 
         # Options
         options_layout = QHBoxLayout()
-        self.main_action_label = QLabel("Main action:")
-        self.main_action_combobox = QComboBox()
-        self.main_action_combobox.addItems([
-            "Copy",
-            "Move"
-        ])
+
+        self.main_action_selection_label = QLabel("Main action:")
+        self.main_action_selection_combobox = QComboBox()
+        self.main_action_selection_combobox.addItems(["Copy", "Move"])
+
+        self.mirror_selection_label = QLabel("Mirror:")
+        self.mirror_selection_combobox = QComboBox()
+        self.mirror_selection_combobox.addItems(["No", "Yes"])
 
         self.ipg_label = QLabel("InterPacketGap value (speed_limiter):")
         self.ipg_combobox = QComboBox()
@@ -138,8 +157,11 @@ class MainWindow(QMainWindow):
             "50__14.5 MB/s",
         ])
 
-        options_layout.addWidget(self.main_action_label)
-        options_layout.addWidget(self.main_action_combobox)
+        options_layout.addWidget(self.main_action_selection_label)
+        options_layout.addWidget(self.main_action_selection_combobox)
+        options_layout.addStretch()
+        options_layout.addWidget(self.mirror_selection_label)
+        options_layout.addWidget(self.mirror_selection_combobox)
         options_layout.addStretch()
         options_layout.addWidget(self.ipg_label)
         options_layout.addWidget(self.ipg_combobox)
@@ -181,8 +203,9 @@ class MainWindow(QMainWindow):
     def _launch_robocopy_slave(self, launch: bool):
         robocopy_wrapper = RoboCopyWrapper(input=self.input_textbox.toPlainText().strip(),
                                            output=self.output_textbox.toPlainText().strip(),
-                                           move=True if self.main_action_combobox.currentText() == 'Move' else False,
-                                           ipg=int(self.ipg_combobox.currentText().split('__')[0]))
+                                           move=True if self.main_action_selection_combobox.currentText() == 'Move' else False,
+                                           ipg=int(self.ipg_combobox.currentText().split('__')[0]),
+                                           mirror=True if self.mirror_selection_combobox.currentText() == 'Yes' else False)
         # Sanity checks
         sanity_check = robocopy_wrapper.sanity_check()
         if not sanity_check['success']:
