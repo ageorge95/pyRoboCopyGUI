@@ -119,9 +119,15 @@ class MainWindow(QMainWindow):
         # Separator
         main_layout.addWidget(self._create_separator())
 
-        # Move Checkbox and IPG Combobox
+        # Options
         options_layout = QHBoxLayout()
-        self.move_checkbox = QCheckBox("Move?")
+        self.main_action_label = QLabel("Main action:")
+        self.main_action_combobox = QComboBox()
+        self.main_action_combobox.addItems([
+            "Copy",
+            "Move"
+        ])
+
         self.ipg_label = QLabel("InterPacketGap value (speed_limiter):")
         self.ipg_combobox = QComboBox()
         self.ipg_combobox.addItems([
@@ -131,7 +137,9 @@ class MainWindow(QMainWindow):
             "40__20 MB/s",
             "50__14.5 MB/s",
         ])
-        options_layout.addWidget(self.move_checkbox)
+
+        options_layout.addWidget(self.main_action_label)
+        options_layout.addWidget(self.main_action_combobox)
         options_layout.addStretch()
         options_layout.addWidget(self.ipg_label)
         options_layout.addWidget(self.ipg_combobox)
@@ -173,7 +181,7 @@ class MainWindow(QMainWindow):
     def _launch_robocopy_slave(self, launch: bool):
         robocopy_wrapper = RoboCopyWrapper(input=self.input_textbox.toPlainText().strip(),
                                            output=self.output_textbox.toPlainText().strip(),
-                                           move=self.move_checkbox.isChecked(),
+                                           move=True if self.main_action_combobox.currentText() == 'Move' else False,
                                            ipg=int(self.ipg_combobox.currentText().split('__')[0]))
         # Sanity checks
         sanity_check = robocopy_wrapper.sanity_check()
