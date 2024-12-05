@@ -147,7 +147,7 @@ class MainWindow(QMainWindow):
         self.mirror_selection_combobox = QComboBox()
         self.mirror_selection_combobox.addItems(["No", "Yes"])
 
-        self.ipg_label = QLabel("InterPacketGap value (speed_limiter):")
+        self.ipg_label = QLabel("InterPacketGap (speed_limiter):")
         self.ipg_combobox = QComboBox()
         self.ipg_combobox.addItems([
             "0__MAX MB/s",
