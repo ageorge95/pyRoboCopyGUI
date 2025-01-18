@@ -5,7 +5,7 @@ from threading import Thread
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QLabel,
     QTextEdit, QPushButton, QCheckBox, QComboBox,
-    QFrame, QWidget, QHBoxLayout
+    QFrame, QWidget, QHBoxLayout, QLineEdit
 )
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QIcon
 from PySide6.QtCore import QMetaObject, Q_ARG
@@ -34,7 +34,8 @@ class RoboCopyWrapper():
                  move: bool = False,
                  mirror: bool = False,
                  mt: int = 0,
-                 restartable: bool = False):
+                 restartable: bool = False,
+                 huge_files: bool = False):
 
         self.input = input
         self.output = output
@@ -43,6 +44,7 @@ class RoboCopyWrapper():
         self.mirror = mirror
         self.mt = mt
         self.restartable = restartable
+        self.huge_files = huge_files
 
         # compute the arguments
         if os.path.isdir(self.input):
@@ -93,6 +95,7 @@ class RoboCopyWrapper():
             (' /MIR' if self.mirror else '') + \
             (' /Z' if self.restartable else '') + \
             (f' /MT:{self.mt}' if self.mt else '') + \
+            (' /J' if self.huge_files else '') + \
             f' /IPG:{self.ipg_str}'
 
 def get_running_path(relative_path):
@@ -100,6 +103,24 @@ def get_running_path(relative_path):
         return os.path.join('_internal', relative_path)
     else:
         return relative_path
+
+def _calculate_ipg(max_speed_mb_s,
+                   robocopy_j=False):
+    # Constants
+    packet_size = 65536  # 64 KB in bytes
+    robocopy_j_packet_size = 1024 * 1024  # 1 MB in bytes for Robocopy /J
+
+    # Convert max speed from MB/s to bytes per second
+    max_speed_bytes_s = max_speed_mb_s * 1024 * 1024
+
+    # Calculate the number of packets per second
+    packets_per_second = max_speed_bytes_s / (robocopy_j_packet_size if robocopy_j else packet_size)
+
+    # Calculate the IPG in milliseconds
+    ipg = 1000 / packets_per_second
+
+    # Return the IPG rounded to the nearest integer (Robocopy uses integer values for IPG)
+    return round(ipg)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -157,15 +178,13 @@ class MainWindow(QMainWindow):
         self.multithreading_selection_combobox = QComboBox()
         self.multithreading_selection_combobox.addItems(['0', '2', '5', '10', '15', '20'])
 
-        self.ipg_label = QLabel("InterPacketGap (speed_limiter):")
-        self.ipg_combobox = QComboBox()
-        self.ipg_combobox.addItems([
-            "0__MAX MB/s",
-            "25__30 MB/s",
-            "30__22 MB/s",
-            "40__20 MB/s",
-            "50__14.5 MB/s",
-        ])
+        self.huge_files_selection_label = QLabel("Huge Files:")
+        self.huge_files_selection_combobox = QComboBox()
+        self.huge_files_selection_combobox.addItems(["No", "Yes"])
+
+        self.speed_limit_label = QLabel("Speed Limiter [MB]:")
+        self.speed_limit_input = QLineEdit()
+        self.speed_limit_input.setPlaceholderText('unlimited')
 
         options_layout.addWidget(self.main_action_selection_label)
         options_layout.addWidget(self.main_action_selection_combobox)
@@ -179,8 +198,11 @@ class MainWindow(QMainWindow):
         options_layout.addWidget(self.multithreading_selection_label)
         options_layout.addWidget(self.multithreading_selection_combobox)
         options_layout.addStretch()
-        options_layout.addWidget(self.ipg_label)
-        options_layout.addWidget(self.ipg_combobox)
+        options_layout.addWidget(self.huge_files_selection_label)
+        options_layout.addWidget(self.huge_files_selection_combobox)
+        options_layout.addStretch()
+        options_layout.addWidget(self.speed_limit_label)
+        options_layout.addWidget(self.speed_limit_input)
         main_layout.addLayout(options_layout)
 
         # Separator
@@ -220,10 +242,13 @@ class MainWindow(QMainWindow):
         robocopy_wrapper = RoboCopyWrapper(input=self.input_textbox.toPlainText().strip(),
                                            output=self.output_textbox.toPlainText().strip(),
                                            move=True if self.main_action_selection_combobox.currentText() == 'Move' else False,
-                                           ipg=int(self.ipg_combobox.currentText().split('__')[0]),
+                                           ipg=int(_calculate_ipg(int(self.speed_limit_input.text())))
+                                                if (self.speed_limit_input.text() != 'unlimited' and self.speed_limit_input.text().isdigit())
+                                                else 0,
                                            mirror=True if self.mirror_selection_combobox.currentText() == 'Yes' else False,
                                            mt=int(self.multithreading_selection_combobox.currentText()),
-                                           restartable=True if self.restartable_selection_combobox.currentText() == 'Yes' else False)
+                                           restartable=True if self.restartable_selection_combobox.currentText() == 'Yes' else False,
+                                           huge_files=True if self.huge_files_selection_combobox.currentText() == 'Yes' else False)
         # Sanity checks
         sanity_check = robocopy_wrapper.sanity_check()
         if not sanity_check['success']:
