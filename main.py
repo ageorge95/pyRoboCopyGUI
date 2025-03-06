@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("pyRoboCopy GUI v" + open(get_running_path('version.txt')).read())
-        self.setGeometry(200, 200, 800, 500)
+        self.setGeometry(200, 200, 1000, 500)
         self.setWindowIcon(QIcon(get_running_path('icon.ico')))
 
         # Main layout
@@ -146,6 +146,10 @@ class MainWindow(QMainWindow):
         self.main_action_selection_combobox = QComboBox()
         self.main_action_selection_combobox.addItems(["Copy", "Move"])
 
+        self.keep_timestamps_label = QLabel("Keep Timestamps:")
+        self.keep_timestamps_combobox = QComboBox()
+        self.keep_timestamps_combobox.addItems(["No", "Yes"])
+
         self.mirror_selection_label = QLabel("Mirror:")
         self.mirror_selection_combobox = QComboBox()
         self.mirror_selection_combobox.addItems(["No", "Yes"])
@@ -168,6 +172,9 @@ class MainWindow(QMainWindow):
 
         options_layout.addWidget(self.main_action_selection_label)
         options_layout.addWidget(self.main_action_selection_combobox)
+        options_layout.addStretch()
+        options_layout.addWidget(self.keep_timestamps_label)
+        options_layout.addWidget(self.keep_timestamps_combobox)
         options_layout.addStretch()
         options_layout.addWidget(self.mirror_selection_label)
         options_layout.addWidget(self.mirror_selection_combobox)
