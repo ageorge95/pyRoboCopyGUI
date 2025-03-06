@@ -32,6 +32,7 @@ class RoboCopyWrapper():
                  output: str,
                  iorate: int = 0,
                  move: bool = False,
+                 keep_timestamps: bool = False,
                  mirror: bool = False,
                  mt: int = 0,
                  restartable: bool = False,
@@ -41,6 +42,7 @@ class RoboCopyWrapper():
         self.output = output
         self.iorate = iorate
         self.move = move
+        self.keep_timestamps = keep_timestamps
         self.mirror = mirror
         self.mt = mt
         self.restartable = restartable
@@ -90,6 +92,7 @@ class RoboCopyWrapper():
             f' "{self.output}"' + \
             (f' "{self.input_file_str}"' if self.input_file_str else '') + \
             f' {self.move_str}' + \
+            ' /COPY:DA' + ('T' if self.keep_timestamps else '') + \
             (' /MIR' if self.mirror else '') + \
             (' /Z' if self.restartable else '') + \
             (f' /MT:{self.mt}' if self.mt else '') + \
@@ -229,6 +232,7 @@ class MainWindow(QMainWindow):
         robocopy_wrapper = RoboCopyWrapper(input=self.input_textbox.toPlainText().strip(),
                                            output=self.output_textbox.toPlainText().strip(),
                                            move=True if self.main_action_selection_combobox.currentText() == 'Move' else False,
+                                           keep_timestamps=True if self.keep_timestamps_combobox.currentText() == 'Yes' else False,
                                            iorate=int(self.speed_limit_input.text())
                                                 if (self.speed_limit_input.text() != 'unlimited' and self.speed_limit_input.text().isdigit())
                                                 else 0,
